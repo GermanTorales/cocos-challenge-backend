@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 import { DataSource } from 'typeorm';
 
 export const AppDataSource = new DataSource({
@@ -7,9 +9,9 @@ export const AppDataSource = new DataSource({
   username: process.env.PG_DB_USER,
   password: process.env.PG_DB_PASS,
   database: process.env.PG_DB_NAME,
-  entities: [],
+  entities: [__dirname + './**/*.entity{.ts,.js}'],
   synchronize: false,
-  migrations: ['src/migrations/*.ts'],
+  migrations: ['migrations/**/*{.ts,.js}'],
   migrationsTableName: 'migrations',
   logging: true,
 });

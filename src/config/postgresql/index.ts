@@ -18,7 +18,7 @@ import { EnvObj, IPostgreSQL } from '@config/env-vars';
           username: postgresql.USER,
           password: postgresql.PASS,
           database: postgresql.NAME,
-          entities: [],
+          entities: [__dirname + './../../../**/*.entity{.ts,.js}'],
           synchronize: false,
           migrationsRun: false,
           logging: false,

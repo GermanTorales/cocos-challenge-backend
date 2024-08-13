@@ -19,7 +19,8 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "@config/*": ["src/config/*"],
-      "@common/*": ["src/common/*"]
+      "@common/*": ["src/common/*"],
+      "@financial-asset/*": ["src/modules/financial-asset/*"]
     }
   }
 }
