@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { validate, envConfig } from '@config/env-vars';
+import { PostgreSQLModule } from '@config/postgresql';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { validate, envConfig } from '@config/env-vars';
       expandVariables: true,
       load: [envConfig],
     }),
+    PostgreSQLModule,
   ],
   controllers: [],
   providers: [],

@@ -17,7 +17,12 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm_src": "typeorm-ts-node-commonjs -d postgresql.datasource.ts",
+    "migrate": "ts-node node_modules/.bin/typeorm migration:run",
+    "migration:create": "typeorm-ts-node-commonjs migration:create",
+    "migration:revert": "typeorm-ts-node-commonjs -d postgresql.datasource.ts migration:revert",
+    "migration:run": "typeorm-ts-node-commonjs -d postgresql.datasource.ts migration:run"
   },
   "dependencies": {
     "@nestjs/common": "10.0.0",
