@@ -1,19 +1,29 @@
 import { Module } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { EnvObj, IPostgreSQL } from '@config/env-vars';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT) || 5432,
-      username: process.env.DB_USERNAME || 'your_username',
-      password: process.env.DB_PASSWORD || 'your_password',
-      database: process.env.DB_DATABASE || 'your_database',
-      entities: [], // Asegúrate de incluir todas tus entidades
-      synchronize: false,
-      migrationsRun: false,
-      logging: false,
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const postgresql = configService.get<IPostgreSQL>(EnvObj.POSTGRESQL);
+
+        return {
+          type: 'postgres',
+          host: postgresql.HOST,
+          port: postgresql.PORT,
+          username: postgresql.USER,
+          password: postgresql.PASS,
+          database: postgresql.NAME,
+          entities: [],
+          synchronize: false,
+          migrationsRun: false,
+          logging: false,
+        };
+      },
     }),
   ],
   providers: [],
