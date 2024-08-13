@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 
 import { validate, envConfig } from '@config/env-vars';
 import { PostgreSQLModule } from '@config/postgresql';
+import { FinancialAssetModule } from '@financial-asset/module';
 
 @Module({
   imports: [
@@ -14,6 +15,9 @@ import { PostgreSQLModule } from '@config/postgresql';
       load: [envConfig],
     }),
     PostgreSQLModule,
+
+    // Modules
+    FinancialAssetModule,
   ],
   controllers: [],
   providers: [],
