@@ -20,7 +20,11 @@
     "paths": {
       "@config/*": ["src/config/*"],
       "@common/*": ["src/common/*"],
-      "@financial-asset/*": ["src/modules/financial-asset/*"]
+      "@financial-asset/*": ["src/modules/financial-asset/*"],
+      "@order/*": ["src/modules/order/*"],
+      "@user/*": ["src/modules/user/*"],
+      "@market/*": ["src/modules/market/*"],
+      "@portfolio/*": ["src/modules/porfolio/*"]
     }
   }
 }

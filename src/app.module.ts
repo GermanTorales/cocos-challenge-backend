@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
-import { validate, envConfig } from '@config/env-vars';
+import { UserModule } from '@user/module';
+import { OrderModule } from '@order/module';
+import { MarketModule } from '@market/module';
+import { PortfolioModule } from '@portfolio/module';
 import { PostgreSQLModule } from '@config/postgresql';
+import { validate, envConfig } from '@config/env-vars';
 import { FinancialAssetModule } from '@financial-asset/module';
 
 @Module({
@@ -18,6 +22,10 @@ import { FinancialAssetModule } from '@financial-asset/module';
 
     // Modules
     FinancialAssetModule,
+    OrderModule,
+    UserModule,
+    PortfolioModule,
+    MarketModule,
   ],
   controllers: [],
   providers: [],
