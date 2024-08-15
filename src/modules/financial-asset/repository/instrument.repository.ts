@@ -24,6 +24,14 @@ export class InstrumentRepository implements IInstrumentRepository {
 
     return query.getMany();
   }
+
+  async findOne(queries: Partial<IInstrumentEntity>): Promise<IInstrumentEntity> {
+    const query = new InstrumentQuery(this.repository);
+
+    query.byTicker(queries.ticker);
+
+    return query.getOne();
+  }
 }
 
 export class InstrumentQuery {

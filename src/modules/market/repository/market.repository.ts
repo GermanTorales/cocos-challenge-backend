@@ -6,6 +6,7 @@ import { IMarketEntity, MarketEntity } from '@market/entity';
 
 export interface IMarketRepository {
   find: (queries: { ids: number[] }) => Promise<IMarketEntity[]>;
+  findOne: (queries: Partial<IMarketEntity>) => Promise<IMarketEntity>;
 }
 
 @Injectable()
@@ -19,6 +20,15 @@ export class MarketRepository implements IMarketRepository {
     query.byId(queries.ids);
 
     return query.getMany();
+  }
+
+  async findOne(queries: Partial<IMarketEntity>): Promise<IMarketEntity> {
+    const query = new MarketQuery(this.repository);
+
+    query.byId([queries.id]);
+    query.byDate('DESC');
+
+    return query.getOne();
   }
 }
 
@@ -39,6 +49,12 @@ export class MarketQuery {
 
   joinInstruments() {
     this.queryBuilder.leftJoinAndSelect('m.instrumentid', 'instrument');
+
+    return this;
+  }
+
+  byDate(type) {
+    this.queryBuilder.orderBy('m.date', type);
 
     return this;
   }
