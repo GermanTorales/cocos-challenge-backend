@@ -1,7 +1,8 @@
+import { Repository } from 'typeorm';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
 
+import { MarketQuery } from '@market/repository';
 import { IMarketEntity, MarketEntity } from '@market/entity';
 
 export interface IMarketRepository {
@@ -29,41 +30,5 @@ export class MarketRepository implements IMarketRepository {
     query.byDate('DESC');
 
     return query.getOne();
-  }
-}
-
-export class MarketQuery {
-  private queryBuilder: SelectQueryBuilder<MarketEntity>;
-
-  constructor(private readonly repository: Repository<MarketEntity>) {
-    this.queryBuilder = this.repository.createQueryBuilder('m');
-  }
-
-  byId(ids: number[]): this {
-    if (!ids?.length) return this;
-
-    this.queryBuilder.orWhere('m.instrumentid IN (:...ids)', { ids });
-
-    return this;
-  }
-
-  joinInstruments() {
-    this.queryBuilder.leftJoinAndSelect('m.instrumentid', 'instrument');
-
-    return this;
-  }
-
-  byDate(type) {
-    this.queryBuilder.orderBy('m.date', type);
-
-    return this;
-  }
-
-  async getMany(): Promise<IMarketEntity[]> {
-    return await this.queryBuilder.getMany();
-  }
-
-  async getOne(): Promise<IMarketEntity | undefined> {
-    return await this.queryBuilder.getOne();
   }
 }

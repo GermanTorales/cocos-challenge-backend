@@ -1,2 +1,2 @@
-export * from './instrument-repository.interface';
 export * from './instrument.repository';
+export * from './instrument.query';

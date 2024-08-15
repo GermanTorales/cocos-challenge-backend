@@ -78,8 +78,8 @@ export class GetPorfolio {
       const market: IMarketEntity = marketData.find((m) => m.instrumentid['id'] === instrumentId);
 
       const currentPositionValuation: number = parseFloat((position.quantity * market.close).toFixed(2));
-      const returnOnInvestment: number = ((currentPositionValuation - position.totalValue) / position.totalValue) * 100;
-      const loss: number = parseFloat((currentPositionValuation - position.totalValue).toFixed(2));
+      const yieldPercentage: number = ((currentPositionValuation - position.totalValue) / position.totalValue) * 100;
+      const yieldValue: number = parseFloat((currentPositionValuation - position.totalValue).toFixed(2));
       const instrumentData: IInstrumentEntity = market.instrumentid as unknown as IInstrumentEntity;
 
       const instrument = {
@@ -92,8 +92,8 @@ export class GetPorfolio {
       const positionData = {
         quantity: position.quantity,
         totalValue: currentPositionValuation,
-        returnOnInvestment: returnOnInvestment.toFixed(2),
-        loss,
+        yieldPercentage: yieldPercentage.toFixed(2),
+        yieldValue,
       };
 
       return { instrument, position: positionData };
