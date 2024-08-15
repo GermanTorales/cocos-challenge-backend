@@ -17,9 +17,9 @@ export const marketData: IMarketEntity = {
   date: new Date(),
 };
 
-export const userOrders: IOrderEntity[] = [
+export const userOrders = [
   {
-    instrumentid: 66,
+    instrumentid: { id: 66 },
     userid: 1,
     size: 10000,
     price: 1,
@@ -29,7 +29,7 @@ export const userOrders: IOrderEntity[] = [
     datetime: dayjs().subtract(7, 'd').toISOString(),
   },
   {
-    instrumentid: 42,
+    instrumentid: instrument,
     userid: 1,
     size: 50,
     price: marketData.previousclose,
@@ -39,7 +39,7 @@ export const userOrders: IOrderEntity[] = [
     datetime: dayjs().subtract(1, 'd').toISOString(),
   },
   {
-    instrumentid: 42,
+    instrumentid: instrument,
     userid: 1,
     size: 10,
     price: marketData.close,
@@ -49,7 +49,7 @@ export const userOrders: IOrderEntity[] = [
     datetime: dayjs().toISOString(),
   },
   {
-    instrumentid: 66,
+    instrumentid: { id: 66 },
     userid: 1,
     size: 1000,
     price: 1,

@@ -46,11 +46,11 @@ export class CreateOrder {
     return orderCreated;
   }
 
-  private getSizeToBuy(currentPrice: number, quantity: number, investment: number, availableCash: number): number {
+  private getSize(currentPrice: number, quantity: number = 0, investment: number): number {
     return investment ? Math.floor(investment / currentPrice) : quantity;
   }
 
-  private checkBuyConditions(currentPrice: number, quantity: number, investment: number, availableCash: number): boolean {
+  private checkBuyConditions(currentPrice: number, quantity: number = 0, investment: number, availableCash: number): boolean {
     if (availableCash < currentPrice) return false;
 
     if (investment) {
@@ -92,21 +92,22 @@ export class CreateOrder {
     instrument: IInstrumentEntity,
     marketData: IMarketEntity,
     orders: IOrderEntity[],
-  ): { newOrder: OrderConstructor; canCompleteOrder: boolean } {
+  ): { newOrder: IOrderEntity; canCompleteOrder: boolean } {
     const instrumentid: number = instrument.id;
     const type = data.type;
     const availableCash: number = calculateAvailableCash(orders);
     const positionQuantity: number = this.getCurrentPositionQuantity(orders, instrumentid);
     const price: number = type === EOrderTypes.MARKET ? marketData.close : data.price;
+
     let instrumentQuantity: number;
     let canCompleteOrder: boolean;
 
     if (data.side === EOrderSides.BUY) {
-      instrumentQuantity = this.getSizeToBuy(price, data.quantity, data.totalInvestment, availableCash);
-      canCompleteOrder = this.checkBuyConditions(price, data.quantity, data.totalInvestment, availableCash);
+      instrumentQuantity = this.getSize(price, data.quantity, data.totalInvestment);
+      canCompleteOrder = this.checkBuyConditions(price, instrumentQuantity, data.totalInvestment, availableCash);
     } else if (data.side === EOrderSides.SELL) {
-      instrumentQuantity = data.quantity;
-      canCompleteOrder = this.checkSellConditions(positionQuantity, data.quantity);
+      instrumentQuantity = this.getSize(price, data.quantity, data.totalInvestment);
+      canCompleteOrder = this.checkSellConditions(positionQuantity, instrumentQuantity);
     }
 
     const newOrder = new OrderConstructor({ ...data, price, size: instrumentQuantity, instrumentid });
@@ -114,7 +115,7 @@ export class CreateOrder {
     return { newOrder, canCompleteOrder };
   }
 
-  private createOrderForCash(data: CreateOrderDto, instrument: IInstrumentEntity, orders: IOrderEntity[]) {
+  private createOrderForCash(data: CreateOrderDto, instrument: IInstrumentEntity, orders: IOrderEntity[]): IOrderEntity {
     const instrumentid: number = instrument.id;
     const price: number = 1;
     let instrumentQuantity: number = data.quantity;
