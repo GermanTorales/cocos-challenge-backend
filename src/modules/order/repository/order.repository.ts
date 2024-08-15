@@ -6,6 +6,7 @@ import { EOrderStatuses, IOrderEntity, OrderEntity } from '@order/entity';
 
 export interface IOrderRepository {
   find: (query: Partial<IOrderEntity>) => Promise<IOrderEntity[]>;
+  create: (data: IOrderEntity) => Promise<IOrderEntity>;
 }
 
 @Injectable()
@@ -20,6 +21,10 @@ export class OrderRepository implements IOrderRepository {
     query.orderByCreated('ASC');
 
     return query.getMany();
+  }
+
+  async create(data: IOrderEntity): Promise<IOrderEntity> {
+    return this.repository.save(this.repository.create(data));
   }
 }
 

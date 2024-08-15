@@ -10,10 +10,7 @@ import { FinancialAssetControllers } from '@financial-asset/controllers';
 @Module({
   imports: [TypeOrmModule.forFeature([InstrumentEntity])],
   controllers: [...FinancialAssetControllers],
-  providers: [
-    V1UseCases.GetInstruments,
-    { provide: PORTS.Instrument, useClass: InstrumentRepository },
-  ],
-  exports: [],
+  providers: [V1UseCases.GetInstruments, { provide: PORTS.Instrument, useClass: InstrumentRepository }],
+  exports: [TypeOrmModule, PORTS.Instrument],
 })
 export class FinancialAssetModule {}

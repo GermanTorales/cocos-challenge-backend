@@ -23,7 +23,7 @@ export enum EOrderStatuses {
 }
 
 export interface IOrderEntity {
-  id: number;
+  id?: number;
   instrumentid: number;
   userid: number;
   size: number;
