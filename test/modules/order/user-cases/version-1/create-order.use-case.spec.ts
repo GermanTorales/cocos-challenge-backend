@@ -1,3 +1,4 @@
+import * as dayjs from 'dayjs';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { PORTS } from '@common/enums';
@@ -52,10 +53,50 @@ describe('Create Order Use Case', () => {
     await expect(createOrderUseCase.exec(dto)).rejects.toThrow(InstrumentNotFound);
   });
 
-  it('should create an order type market successfully', async () => {
+  it('should create an BUY order type market successfully', async () => {
     const createOrderDto: CreateOrderDto = {
       userid: 1,
       side: EOrderSides.BUY,
+      type: EOrderTypes.MARKET,
+      quantity: 10,
+      ticker: 'PAMP',
+      price: 100,
+    };
+
+    mockInstrumentRepository.findOne.mockReturnValue(instrument);
+    mockMarketRepository.findOne.mockReturnValue(marketData);
+    mockOrderRepository.find.mockReturnValue(userOrders);
+    mockOrderRepository.create.mockReturnValue(
+      Promise.resolve({
+        ...createOrderDto,
+        status: EOrderStatuses.FILLED,
+        id: Math.floor(Math.random() * 100),
+        instrument: instrument.id,
+      }),
+    );
+
+    const order = await createOrderUseCase.exec(createOrderDto);
+
+    expect(marketRepository.findOne).toHaveBeenCalledWith({ id: instrument.id });
+    expect(instrumentRepository.findOne).toHaveBeenCalledWith({ ticker: createOrderDto.ticker });
+    expect(orderRepository.find).toHaveBeenCalledWith({ userid: createOrderDto.userid, status: EOrderStatuses.FILLED });
+
+    expect(order).toMatchObject({
+      id: expect.any(Number),
+      instrument: instrument.id,
+      userid: createOrderDto.userid,
+      ticker: createOrderDto.ticker,
+      status: EOrderStatuses.FILLED,
+      type: createOrderDto.type,
+      side: createOrderDto.side,
+      quantity: expect.any(Number),
+    });
+  });
+
+  it('should create an SELL order type market successfully', async () => {
+    const createOrderDto: CreateOrderDto = {
+      userid: 1,
+      side: EOrderSides.SELL,
       type: EOrderTypes.MARKET,
       quantity: 10,
       ticker: 'PAMP',
@@ -147,6 +188,53 @@ describe('Create Order Use Case', () => {
     mockMarketRepository.findOne.mockReturnValue(marketData);
     mockOrderRepository.find.mockReturnValue(userOrders);
     mockOrderRepository.create.mockReturnValue(Promise.resolve({ ...createOrderDto, status: EOrderStatuses.FILLED }));
+
+    await expect(createOrderUseCase.exec(createOrderDto)).rejects.toThrow(OrderRejected);
+  });
+
+  it('should reject order for available cash less of current price', async () => {
+    const createOrderDto: CreateOrderDto = {
+      userid: 1,
+      side: EOrderSides.BUY,
+      type: EOrderTypes.MARKET,
+      quantity: 3,
+      ticker: 'PAMP',
+      price: 100,
+    };
+
+    mockInstrumentRepository.findOne.mockReturnValue(instrument);
+    mockMarketRepository.findOne.mockReturnValue({ ...marketData, close: 99999999 });
+    mockOrderRepository.find.mockReturnValue(userOrders);
+    mockOrderRepository.create.mockReturnValue(Promise.resolve({ ...createOrderDto, status: EOrderStatuses.REJECTED }));
+
+    await expect(createOrderUseCase.exec(createOrderDto)).rejects.toThrow(OrderRejected);
+  });
+
+  it('should reject order for total investment higher of available cash', async () => {
+    const createOrderDto: CreateOrderDto = {
+      userid: 1,
+      side: EOrderSides.BUY,
+      type: EOrderTypes.LIMIT,
+      ticker: 'PAMP',
+      price: 100,
+      totalInvestment: 110,
+    };
+
+    mockInstrumentRepository.findOne.mockReturnValue(instrument);
+    mockMarketRepository.findOne.mockReturnValue(marketData);
+    mockOrderRepository.find.mockReturnValue([
+      {
+        instrumentid: { id: 66 },
+        userid: 1,
+        size: 100,
+        price: 1,
+        side: EOrderSides.CASH_IN,
+        type: EOrderTypes.MARKET,
+        status: EOrderStatuses.FILLED,
+        datetime: dayjs().toISOString(),
+      },
+    ]);
+    mockOrderRepository.create.mockReturnValue(Promise.resolve({ ...createOrderDto, status: EOrderStatuses.REJECTED }));
 
     await expect(createOrderUseCase.exec(createOrderDto)).rejects.toThrow(OrderRejected);
   });

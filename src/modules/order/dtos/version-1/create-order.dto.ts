@@ -17,11 +17,11 @@ export class CreateOrderDto {
   @IsEnum(EOrderSides)
   side: EOrderSides;
 
-  @IsOptional()
+  @ValidateIf((params) => params.type === EOrderTypes.MARKET && !params?.quantity)
   @IsPositive()
   totalInvestment?: number;
 
-  @IsOptional()
+  @ValidateIf((params) => params.type === EOrderTypes.MARKET && !params?.totalInvestment)
   @IsInt()
   @IsPositive()
   quantity?: number;
