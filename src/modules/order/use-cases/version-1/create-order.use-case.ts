@@ -5,6 +5,7 @@ import { IMarketEntity } from '@market/entity';
 import { IOrderRepository } from '@order/repository';
 import { CreateOrderDto } from '@order/dtos/version-1';
 import { IMarketRepository } from '@market/repository';
+import { calculateAvailableCash } from '@/common/utils';
 import { IInstrumentEntity } from '@financial-asset/entity';
 import { IInstrumentRepository } from '@financial-asset/repository';
 import { InstrumentNotFound, OrderRejected } from '@order/exceptions';
@@ -31,7 +32,11 @@ export class CreateOrder {
     if (data.side === EOrderSides.CASH_IN || data.side === EOrderSides.CASH_OUT) {
       newOrder = this.createOrderForCash(data, instrument, userOrders);
     } else {
-      newOrder = this.createOrderByType(data, instrument, marketData, userOrders);
+      const result = this.createOrderByType(data, instrument, marketData, userOrders);
+
+      newOrder = result.newOrder;
+
+      if (!result.canCompleteOrder) newOrder.status = EOrderStatuses.REJECTED;
     }
 
     const orderCreated: IOrderEntity = await this.orderRepository.create(newOrder);
@@ -41,38 +46,30 @@ export class CreateOrder {
     return orderCreated;
   }
 
-  // TODO: Modularizar para su reutilizacion
-  private calculateAvailableCash(orders: IOrderEntity[]): number {
-    return orders.reduce((cash, order) => {
-      if (order.side === EOrderSides.CASH_IN) return cash + order.size;
-      else if (order.side === EOrderSides.CASH_OUT) return cash - order.size;
-      else if (order.side === EOrderSides.BUY) return cash - order.size * order.price;
-      else if (order.side === EOrderSides.SELL) return cash + order.size * order.price;
-
-      return cash;
-    }, 0);
+  private getSizeToBuy(currentPrice: number, quantity: number, investment: number, availableCash: number): number {
+    return investment ? Math.floor(investment / currentPrice) : quantity;
   }
 
-  private getSizeToBuy(currentPrice: number, quantity: number, investment: number, availableCash: number): number {
-    if (availableCash < currentPrice) return 0;
+  private checkBuyConditions(currentPrice: number, quantity: number, investment: number, availableCash: number): boolean {
+    if (availableCash < currentPrice) return false;
 
     if (investment) {
-      if (investment > availableCash) return 0;
-      if (investment < currentPrice) return 0;
+      if (investment > availableCash) return false;
+      if (investment < currentPrice) return false;
 
-      return Math.floor(investment / currentPrice);
+      return true;
     }
 
-    if (availableCash < quantity * currentPrice) return 0;
+    if (availableCash < quantity * currentPrice) return false;
 
-    return quantity;
+    return true;
   }
 
-  private getSizeToSell(currentQuantity: number, wantToSell: number): number {
-    if (!currentQuantity) return 0;
-    if (wantToSell > currentQuantity) return 0;
+  private checkSellConditions(currentQuantity: number, wantToSell: number): boolean {
+    if (!currentQuantity) return false;
+    if (wantToSell > currentQuantity) return false;
 
-    return wantToSell;
+    return true;
   }
 
   private getCurrentPositionQuantity(orders: IOrderEntity[], instrumentId: number): number {
@@ -95,21 +92,26 @@ export class CreateOrder {
     instrument: IInstrumentEntity,
     marketData: IMarketEntity,
     orders: IOrderEntity[],
-  ): OrderConstructor {
+  ): { newOrder: OrderConstructor; canCompleteOrder: boolean } {
     const instrumentid: number = instrument.id;
     const type = data.type;
-    const availableCash: number = this.calculateAvailableCash(orders);
+    const availableCash: number = calculateAvailableCash(orders);
     const positionQuantity: number = this.getCurrentPositionQuantity(orders, instrumentid);
     const price: number = type === EOrderTypes.MARKET ? marketData.close : data.price;
     let instrumentQuantity: number;
+    let canCompleteOrder: boolean;
 
     if (data.side === EOrderSides.BUY) {
       instrumentQuantity = this.getSizeToBuy(price, data.quantity, data.totalInvestment, availableCash);
+      canCompleteOrder = this.checkBuyConditions(price, data.quantity, data.totalInvestment, availableCash);
     } else if (data.side === EOrderSides.SELL) {
-      instrumentQuantity = this.getSizeToSell(positionQuantity, data.quantity);
+      instrumentQuantity = data.quantity;
+      canCompleteOrder = this.checkSellConditions(positionQuantity, data.quantity);
     }
 
-    return new OrderConstructor({ ...data, price, size: instrumentQuantity, instrumentid });
+    const newOrder = new OrderConstructor({ ...data, price, size: instrumentQuantity, instrumentid });
+
+    return { newOrder, canCompleteOrder };
   }
 
   private createOrderForCash(data: CreateOrderDto, instrument: IInstrumentEntity, orders: IOrderEntity[]) {
@@ -118,7 +120,7 @@ export class CreateOrder {
     let instrumentQuantity: number = data.quantity;
 
     if (data.side === EOrderSides.CASH_OUT) {
-      const availableCash: number = this.calculateAvailableCash(orders);
+      const availableCash: number = calculateAvailableCash(orders);
 
       if (availableCash < data.quantity) instrumentQuantity = 0;
     }
