@@ -3,9 +3,10 @@ import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 
 import { AppModule } from './app.module';
-import { EnvObj, IApp } from '@config/env-vars';
 import { morganConfig } from '@config/morgan';
+import { swaggerConfig } from '@config/swagger';
 import { AllExceptionsFilter } from '@common/filters';
+import { EEnvironment, EnvObj, IApp } from '@config/env-vars';
 
 async function bootstrap() {
   const logger: Logger = new Logger('Bootstrap');
@@ -33,6 +34,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableVersioning({ type: VersioningType.URI, prefix: 'v', defaultVersion: '1' });
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter, configService));
+
+  if (appConfig.ENV !== EEnvironment.PROD) {
+    swaggerConfig(app);
+  }
 
   await app.listen(appConfig.PORT, () => logger.log(`Server running on port: ${appConfig.PORT}`));
 }
