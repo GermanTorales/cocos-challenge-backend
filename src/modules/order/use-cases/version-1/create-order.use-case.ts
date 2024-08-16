@@ -38,16 +38,17 @@ export class CreateOrder {
     const userOrders: IOrderEntity[] = await this.orderRepository.find({ userid: data.userid, status: EOrderStatuses.FILLED });
 
     let newOrder: IOrderEntity;
+    let result: ICreateOrderRes;
 
     if (data.side === EOrderSides.CASH_IN || data.side === EOrderSides.CASH_OUT) {
-      newOrder = this.createOrderForCash({ dto: data, instrument, orders: userOrders });
+      result = this.createOrderForCash({ dto: data, instrument, orders: userOrders });
     } else {
-      const result = await this.createOrderByType({ dto: data, instrument, orders: userOrders });
-
-      newOrder = result.newOrder;
-
-      if (!result.canCompleteOrder) newOrder.status = EOrderStatuses.REJECTED;
+      result = await this.createOrderByType({ dto: data, instrument, orders: userOrders });
     }
+
+    newOrder = result.newOrder;
+
+    if (!result.canCompleteOrder) newOrder.status = EOrderStatuses.REJECTED;
 
     const orderCreated: IOrderEntity = await this.orderRepository.create(newOrder);
 
@@ -123,18 +124,22 @@ export class CreateOrder {
     return { newOrder, canCompleteOrder };
   }
 
-  private createOrderForCash(data: ICreateOrderFn): IOrderEntity {
+  private createOrderForCash(data: ICreateOrderFn): ICreateOrderRes {
     const { instrument, dto, orders } = data;
     const instrumentid: number = instrument.id;
     const price: number = 1;
+
     let instrumentQuantity: number = dto.quantity;
+    let canCompleteOrder: boolean = true;
 
     if (dto.side === EOrderSides.CASH_OUT) {
       const availableCash: number = calculateAvailableCash(orders);
 
-      if (availableCash < dto.quantity) instrumentQuantity = 0;
+      if (availableCash < dto.quantity) canCompleteOrder = false;
     }
 
-    return new OrderConstructor({ ...dto, price, size: instrumentQuantity, instrumentid });
+    const newOrder = new OrderConstructor({ ...dto, price, size: instrumentQuantity, instrumentid });
+
+    return { newOrder, canCompleteOrder };
   }
 }
