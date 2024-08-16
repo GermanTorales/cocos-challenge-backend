@@ -75,3 +75,42 @@ Ejecutar coverage
 ```bash
 npm run test:cov
 ```
+
+## Codigo
+
+- [x] Versionamiento en la API.
+- [x] Clean Architecture.
+- [x] Logs de la API con Morgan.
+- [x] Validaciones de variables de entorno.
+- [x] Documentacion de la API con Swagger.
+- [x] Sistema de excepciones.
+
+## Organizacion de carpetas
+
+```
+|--src\
+    |--common\                      # Archivos de uso comun en el server.
+    |--config\                      # Configuraciones de distintas dependencias.
+    |--modules\                     # Modulos de la aplicacion.
+        |--module-name
+            |--controllers          # Controllers versionados del modulo.
+            |--dtos                 # Data Transfer Objects interfaces.
+            |--entity               # Entidad de base de datos del modulo.
+            |--presentations        # Clases que representan a las respuestas de los endpoints.
+            |--repository           # Comunicacion con base de datos.
+            |--use-cases            # Logica de negocio.
+            |--module.ts            # Modulo.
+
+    |--app.module.ts                # Modulo principal.
+    |--man.ts                       # Archivo root.
+```
+
+## Documentacion
+
+Existe un swagger al que se puede acceder para ver la documentacion de los endpoints.
+
+```bash
+http://localhost:3131/api-docs
+```
+
+Ademas, en el repositorio, se inluyeron los archivos JSON para importar la coleccion en **Postman**.
